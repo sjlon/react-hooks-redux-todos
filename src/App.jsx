@@ -83,6 +83,10 @@ const Todos = memo(function Todos({ todos, dispatch, removeTodo, toggleTodo }) {
 		</ul>
 	)
 })
+const store = {
+	todos: [],
+	incrementCount: 0,
+}
 
 function TodoList() {
 	const [todos, setTodos] = useState([])
@@ -163,13 +167,22 @@ function TodoList() {
 	// }
 	const reducer = combineReducers(reducers)
 	const dispatch = (action) => {
-		const state = { todos, incrementCount }
+		// const state = { todos, incrementCount }
 		const setters = {
 			todos: setTodos,
 			incrementCount: setIncrementCount,
 		}
 		console.log(action)
-		const newState = reducer(state, action)
+		const newState = reducer(store, action)
+		if ('function' === typeof action) {
+			action(dispatch, () => store)
+			return
+		}
+		// const newState = reducer(state, action)
+		// if ('function' === typeof action) {
+		// 	action(dispatch, () => state)
+		// 	return
+		// }
 		for (let key in newState) {
 			setters[key](newState[key])
 		}
@@ -218,6 +231,9 @@ function TodoList() {
 	// }, [])
 
 	// 副作用
+	useEffect(() => {
+		Object.assign(store, { todos, incrementCount })
+	}, [todos, incrementCount])
 	useEffect(() => {
 		let todos = JSON.parse(localStorage.getItem(LS_KEY) || '[]')
 		dispatch(createSet(todos))
