@@ -3,25 +3,39 @@ import './App.css'
 import { createSet, createAdd, createRemove, createToggle } from './action'
 let isSeq = Date.now()
 const LS_KEY = '$_todos'
+/**
+ * { addTodo: createAdd, removeTodo: createRemove} addTodo = payload => dispatch(createAdd(payload))
+ * @param {*} actionCreators
+ * @param {*} dispatch
+ */
+function bindActionCreators(actionCreators, dispatch) {
+	let ret = {}
+	for (let key in actionCreators) {
+		ret[key] = function (...args) {
+			const actionCreator = actionCreators[key]
+			const action = actionCreator(...args)
+			dispatch(action)
+		}
+	}
+	return ret
+}
 
-const Control = memo(function Control({ dispatch }) {
+const Control = memo(function Control({ dispatch, addTodo }) {
 	const inputRef = useRef()
 	const submit = (e) => {
 		e.preventDefault()
-		dispatch(
-			createAdd({
-				id: ++isSeq,
-				complete: false,
-				text: inputRef.current.value,
-			})
-		)
+		let newTodo = {
+			id: ++isSeq,
+			complete: false,
+			text: inputRef.current.value,
+		}
+		addTodo(newTodo)
+		// dispatch(
+		// 	createAdd(newTodo)
+		// )
 		// dispatch({
 		// 	type: 'add',
-		// 	payload: {
-		// 		id: ++isSeq,
-		// 		complete: false,
-		// 		text: inputRef.current.value,
-		// 	},
+		// 	payload: newTodo,
 		// })
 		inputRef.current.value = ''
 	}
@@ -34,16 +48,18 @@ const Control = memo(function Control({ dispatch }) {
 		</div>
 	)
 })
-const TodoItem = memo(function TodoItem({ id, text, complete, dispatch }) {
+const TodoItem = memo(function TodoItem({ id, text, complete, dispatch, removeTodo, toggleTodo }) {
 	const onChange = (id) => {
 		// dispatch({
 		// 	type: 'toggle',
 		// 	payload: id,
 		// })
-		dispatch(createToggle(id))
+		// dispatch(createToggle(id))
+		toggleTodo(id)
 	}
 	const onRemove = (id) => {
-		dispatch(createRemove(id))
+		removeTodo(id)
+		// dispatch(createRemove(id))
 		// dispatch({
 		// 	type: 'remove',
 		// 	payload: id,
@@ -58,11 +74,11 @@ const TodoItem = memo(function TodoItem({ id, text, complete, dispatch }) {
 	)
 })
 
-const Todos = memo(function Todos({ todos, dispatch }) {
+const Todos = memo(function Todos({ todos, dispatch, removeTodo, toggleTodo }) {
 	return (
 		<ul>
 			{todos.map((todo) => {
-				return <TodoItem dispatch={dispatch} text={todo.text} complete={todo.complete} key={todo.id} id={todo.id} />
+				return <TodoItem dispatch={dispatch} removeTodo={removeTodo} toggleTodo={toggleTodo} text={todo.text} complete={todo.complete} key={todo.id} id={todo.id} />
 			})}
 		</ul>
 	)
@@ -107,8 +123,10 @@ function TodoList() {
 	}, [todos])
 	return (
 		<div className='todo-list'>
-			<Control dispatch={dispatch} />
-			<Todos todos={todos} dispatch={dispatch} />
+			{/* <Control dispatch={dispatch} />
+			<Todos todos={todos} dispatch={dispatch} /> */}
+			<Control {...bindActionCreators({ addTodo: createAdd }, dispatch)} />
+			<Todos todos={todos} {...bindActionCreators({ removeTodo: createRemove, toggleTodo: createToggle }, dispatch)} />
 		</div>
 	)
 }
