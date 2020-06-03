@@ -86,32 +86,79 @@ const Todos = memo(function Todos({ todos, dispatch, removeTodo, toggleTodo }) {
 
 function TodoList() {
 	const [todos, setTodos] = useState([])
-	const dispatch = useCallback((action) => {
+	const [incrementCount, setIncrementCount] = useState(0)
+	function reducer(state, action) {
+		const { todos, incrementCount } = state
 		const { type, payload } = action
 		switch (type) {
 			case 'set':
-				setTodos(payload)
-				break
+				return { ...state, todos: payload, incrementCount: incrementCount + 1 }
 			case 'add':
-				setTodos((todos) => [...todos, payload])
-				break
+				return {
+					...state,
+					todos: [...todos, payload],
+					incrementCount: incrementCount + 1,
+				}
 			case 'remove':
-				setTodos((todos) =>
-					todos.filter((todo) => {
-						return todo.id !== payload
-					})
-				)
-				break
+				// setTodos((todos) =>
+				const filtersTodos = todos.filter((todo) => {
+					return todo.id !== payload
+				})
+				return { todos: filtersTodos, incrementCount }
+			// )
 			case 'toggle':
-				setTodos((todos) =>
-					todos.map((todo) => {
-						return todo.id === payload ? { ...todo, complete: !todo.complete } : todo
-					})
-				)
-				break
+				// setTodos((todos) =>
+				const mapTodos = todos.map((todo) => {
+					return todo.id === payload ? { ...todo, complete: !todo.complete } : todo
+				})
+				return { todos: mapTodos, incrementCount }
+			// )
 			default:
+				return state
 		}
-	}, [])
+	}
+	const dispatch = (action) => {
+		const state = {
+			todos,
+			incrementCount,
+		}
+		const setters = {
+			todos: setTodos,
+			incrementCount: setIncrementCount,
+		}
+		const newState = reducer(state, action)
+		// 数据同步
+		for (let key in newState) {
+			setters[key](newState[key])
+		}
+	}
+
+	// const dispatch = useCallback((action) => {
+	// 	const { type, payload } = action
+	// 	switch (type) {
+	// 		case 'set':
+	// 			setTodos(payload)
+	// 			break
+	// 		case 'add':
+	// 			setTodos((todos) => [...todos, payload])
+	// 			break
+	// 		case 'remove':
+	// 			setTodos((todos) =>
+	// 				todos.filter((todo) => {
+	// 					return todo.id !== payload
+	// 				})
+	// 			)
+	// 			break
+	// 		case 'toggle':
+	// 			setTodos((todos) =>
+	// 				todos.map((todo) => {
+	// 					return todo.id === payload ? { ...todo, complete: !todo.complete } : todo
+	// 				})
+	// 			)
+	// 			break
+	// 		default:
+	// 	}
+	// }, [])
 
 	// 副作用
 	useEffect(() => {
