@@ -87,51 +87,108 @@ const Todos = memo(function Todos({ todos, dispatch, removeTodo, toggleTodo }) {
 function TodoList() {
 	const [todos, setTodos] = useState([])
 	const [incrementCount, setIncrementCount] = useState(0)
-	function reducer(state, action) {
-		const { todos, incrementCount } = state
-		const { type, payload } = action
-		switch (type) {
-			case 'set':
-				return { ...state, todos: payload, incrementCount: incrementCount + 1 }
-			case 'add':
-				return {
-					...state,
-					todos: [...todos, payload],
-					incrementCount: incrementCount + 1,
-				}
-			case 'remove':
-				// setTodos((todos) =>
-				const filtersTodos = todos.filter((todo) => {
-					return todo.id !== payload
-				})
-				return { todos: filtersTodos, incrementCount }
-			// )
-			case 'toggle':
-				// setTodos((todos) =>
-				const mapTodos = todos.map((todo) => {
-					return todo.id === payload ? { ...todo, complete: !todo.complete } : todo
-				})
-				return { todos: mapTodos, incrementCount }
-			// )
-			default:
-				return state
+	function combineReducers(reducers) {
+		return function (state, action) {
+			let changed = {}
+			for (let key in reducers) {
+				changed[key] = reducers[key](state[key], action)
+			}
+			return changed
 		}
 	}
+	const reducers = {
+		todos(state, action) {
+			const { type, payload } = action
+			switch (type) {
+				case 'set':
+					return payload
+				case 'add':
+					return [...state, payload]
+				case 'remove':
+					// setTodos((todos) =>
+					return state.filter((todo) => {
+						return todo.id !== payload
+					})
+				// )
+				case 'toggle':
+					// setTodos((todos) =>
+					return state.map((todo) => {
+						return todo.id === payload ? { ...todo, complete: !todo.complete } : todo
+					})
+				// )
+				default:
+					return state
+			}
+		},
+		incrementCount(state, action) {
+			const { type, payload } = action
+			switch (type) {
+				case 'set':
+				case 'add':
+					return state + 1
+				default:
+					return state
+			}
+		},
+	}
+	// function reducer(state, action) {
+	// 	const { todos, incrementCount } = state
+	// 	const { type, payload } = action
+	// 	switch (type) {
+	// 		case 'set':
+	// 			return { ...state, todos: payload, incrementCount: incrementCount + 1 }
+	// 		case 'add':
+	// 			return {
+	// 				...state,
+	// 				todos: [...todos, payload],
+	// 				incrementCount: incrementCount + 1,
+	// 			}
+	// 		case 'remove':
+	// 			// setTodos((todos) =>
+	// 			const filtersTodos = todos.filter((todo) => {
+	// 				return todo.id !== payload
+	// 			})
+	// 			return { todos: filtersTodos, incrementCount }
+	// 		// )
+	// 		case 'toggle':
+	// 			// setTodos((todos) =>
+	// 			const mapTodos = todos.map((todo) => {
+	// 				return todo.id === payload ? { ...todo, complete: !todo.complete } : todo
+	// 			})
+	// 			return { todos: mapTodos, incrementCount }
+	// 		// )
+	// 		default:
+	// 			return state
+	// 	}
+	// }
+	const reducer = combineReducers(reducers)
 	const dispatch = (action) => {
-		const state = {
-			todos,
-			incrementCount,
-		}
+		const state = { todos, incrementCount }
 		const setters = {
 			todos: setTodos,
 			incrementCount: setIncrementCount,
 		}
+		console.log(action)
 		const newState = reducer(state, action)
-		// 数据同步
 		for (let key in newState) {
 			setters[key](newState[key])
 		}
 	}
+	// const dispatch = (action) => {
+	// 	const state = {
+	// 		todos,
+	// 		incrementCount,
+	// 	}
+	// 	const setters = {
+	// 		todos: setTodos,
+	// 		incrementCount: setIncrementCount,
+	// 	}
+	// 	const newState = reducer(state, action)
+	// 	// 数据同步
+	// 	for (let key in newState) {
+	// 		setters[key](newState[key])
+	// 	}
+	// }
 
 	// const dispatch = useCallback((action) => {
 	// 	const { type, payload } = action
