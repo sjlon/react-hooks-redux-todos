@@ -1,5 +1,6 @@
 import React, { useState, useRef, useCallback, useEffect, useMemo, memo } from 'react'
 import './App.css'
+import { createSet, createAdd, createRemove, createToggle } from './action'
 let isSeq = Date.now()
 const LS_KEY = '$_todos'
 
@@ -7,14 +8,21 @@ const Control = memo(function Control({ dispatch }) {
 	const inputRef = useRef()
 	const submit = (e) => {
 		e.preventDefault()
-		dispatch({
-			type: 'add',
-			payload: {
+		dispatch(
+			createAdd({
 				id: ++isSeq,
 				complete: false,
 				text: inputRef.current.value,
-			},
-		})
+			})
+		)
+		// dispatch({
+		// 	type: 'add',
+		// 	payload: {
+		// 		id: ++isSeq,
+		// 		complete: false,
+		// 		text: inputRef.current.value,
+		// 	},
+		// })
 		inputRef.current.value = ''
 	}
 	return (
@@ -28,16 +36,18 @@ const Control = memo(function Control({ dispatch }) {
 })
 const TodoItem = memo(function TodoItem({ id, text, complete, dispatch }) {
 	const onChange = (id) => {
-		dispatch({
-			type: 'toggle',
-			payload: id,
-		})
+		// dispatch({
+		// 	type: 'toggle',
+		// 	payload: id,
+		// })
+		dispatch(createToggle(id))
 	}
 	const onRemove = (id) => {
-		dispatch({
-			type: 'remove',
-			payload: id,
-		})
+		dispatch(createRemove(id))
+		// dispatch({
+		// 	type: 'remove',
+		// 	payload: id,
+		// })
 	}
 	return (
 		<li className='todo-item'>
@@ -90,10 +100,7 @@ function TodoList() {
 	// 副作用
 	useEffect(() => {
 		let todos = JSON.parse(localStorage.getItem(LS_KEY) || '[]')
-		dispatch({
-			type: 'set',
-			payload: todos,
-		})
+		dispatch(createSet(todos))
 	}, [])
 	useEffect(() => {
 		localStorage.setItem(LS_KEY, JSON.stringify(todos))
